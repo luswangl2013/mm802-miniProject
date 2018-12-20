@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+
+-->
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>MM802 Mini Project</title>
+        <script type="text/javascript" src="d3.js"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+        <script>
+        // change the rect of the region
+        // let the mouse move to y label then let the color appear
+        $(document).ready(function(){
+            $("#ypresent").mouseenter(function(){
+                var div = $("rect");
+                div.animate({height: '60px', opacity: '0.4'}, "slow");
+                div.animate({width: '60px', opacity: '0.8'}, "slow");
+                div.animate({height: '30px', opacity: '0.4'}, "slow");
+                div.animate({width: '30px', opacity: '0.8'}, "slow");
+             });
+        });
+
+        </script>
+        <style type="text/css">
+            .axis text{
+                font-weight: bold;
+                font-size: 12px;
+            }
+
+            circle:hover {
+                fill: grey;
+            }
+            #label_c {
+                position: absolute;
+                width: 200px;
+                height: auto;
+                padding: 10px;
+                background-color: white;
+                -webkit-border-radius: 10px;
+                -moz-border-radius: 10px;
+                border-radius: 10px;
+                -webkit-box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+                -moz-box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+                box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+                pointer-events: none;
+            }
+
+            .hidden {
+                display: none;
+            }
+
+            #label_c p {
+                margin: 0;
+                font-family: sans-serif;
+                font-size: 16px;
+                line-height: 20px;
+            }
+            .indicateline{
+                stroke: grey;
+                stroke-dasharray: 5,5;
+            }
+            #legendsvg text{
+                font-family:serif;
+                font-size:20;
+                fill:black;
+            }
+        
+            .Create {
+                background-color: #008CBA;
+                border: none;
+                color: white;
+                padding: 15px 32px;
+                text-align: center;
+                text-decoration: none;
+                display: inline-block;
+                font-size: 16px;
+                margin: 4px 2px;
+                border-radius: 12px;
+                -webkit-transition-duration: 0.4s; /* Safari */
+                transition-duration: 0.4s;
+                cursor: pointer;
+
+        }
+                
+            .Create:hover {
+                background-color: white;
+                color: black;
+                border: 2px solid #008CBA;
+            }
+        
+        </style>
+    </head>
+    <body>
+        <form>
+            Select X Variable:<select id="xvariable">
+                <option value="gdpgrowth" selected>GDP Growth Rate</option>
+                <option value="pergdp">GDP per capita</option>
+            </select>
+        </form>
+        <form>
+            Select Y Variable:<select id="yvariable">
+                <option value="predep" selected>Prevalence of Depressive Disorder</option>
+                <option value="preanx">Prevalence of Anxiety Disorder</option>
+                <option value="pretotal">Prevalence of Both Mental Disorder</option>
+                <option value="YLDdep">Health Loss of Depressive Disorder</option>
+                <option value="YLDanx">Health Loss of Anxiety Disorder</option>
+                <option value="YLDtotal">Health Loss of Both Mental Disorder</option>
+            </select>
+        </form>
+        <button class="Create" type="button" onclick="changeTitle()">Create</button>
+        <p id="ypresent">prevailence of depression </p><p><em> VS </em></p><p id="xpresent">gdp growth rate</p>
+        <p id="sizeexplan">size: total cases of depression</p>
+        <svg id="legendsvg" width="1000" height ="100">
+        <text x="10" y="30" >Color of WHO Region:</text>
+        <rect x="200" y="10" width="30" height="30" fill="rgb(255,0,0)" display: none;/>
+        <text x="235" y="30" font-size="18">= African</text>
+        <rect x="400" y="10" width="30" height="30" fill="rgb(0,255,0)" display: none;/>
+        <text x="435" y="30" font-size="18">= Americas</text>
+        <rect x="10" y="60" width="30" height="30" fill="rgb(0,0,255)" display: none;/>
+        <text x="45" y="80" font-size="18">= Eastern Mediterranean</text>
+        <rect x="300" y="60" width="30" height="30" fill="rgb(255,192,0)" display: none;/>
+        <text x="335" y="80" font-size="18">= European</text>
+        <rect x="500" y="60" width="30" height="30" fill="rgb(0,255,255)" display: none;/>
+        <text x="535" y="80" font-size="18">= South East Asia</text>
+        <rect x="750" y="60" width="30" height="30" fill="rgb(255,0,255)" display: none;/>
+        <text x="785" y="80" font-size="18">= Western Pacific</text>
+        </svg>
+
+        <div id="label_c" class="hidden">
+            <p id = "country">Country</p>
+            <p id = "value">value</p>
+        </div>
+        <svg id="mainsvg">
+        <line id="xindicate" class="indicateline hidden"></line>
+        <line id="yindicate" class="indicateline hidden"></line>
+        </svg>
+
+        <script type="text/javascript">
+    
+            
+            function choosey(y) {
+                switch (y) {
+                    case "predep":
+                        return "Prevailence of Depression in % of population";
+                        break;
+                    case "preanx":
+                        return "Prevailence of Anxiety in % of population";
+                        break;
+                    case "pretotal":
+                        return "Prevailence of Both Disorder in % of population";
+                        break;
+                    case "YLDdep":
+                        return "Depression YLD in % of total YLD";
+                        break;
+                    case "YLDanx":
+                        return "Anxiety YLD in % of total YLD";
+                        break;
+                    case "YLDtotal":
+                        return "Both Disorder Sum YLD in % of total YLD";
+                        break;
+                }
+            }
+            ;
+            function choosex(x) {
+                switch (x) {
+                    case "gdpgrowth":
+                        return "GDP Growth Rate in %";
+                        break;
+                    case "pergdp":
+                        return "GDP per Capita in US$ in LOG function";
+                        break;
+                }
+            }
+            ;
+
+            var tyConvert = function (d) {
+                return {
+                    country: d.country,
+                    GDPgrowthrate: parseFloat(d.GDPgrowthrate.replace(/,/g, "")),
+                    PercapitaGDP: parseFloat(d.PercapitaGDP.replace(/,/g, "")),
+                    PREofDepression: parseFloat(d.PREofDepression.replace(/,/g, "")),
+                    DepPercent: parseFloat(d.DepPercent.replace(/,/g, "")),
+                    AnxPercent: parseFloat(d.AnxPercent.replace(/,/g, "")),
+                    PREofAnxiety: parseFloat(d.PREofAnxiety.replace(/,/g, "")),
+                    YLDofAnx: parseFloat(d.YLDofAnx.replace(/,/g, "")),
+                    YLDofDep: parseFloat(d.YLDofDep.replace(/,/g, "")),
+                    YLDperAnx: parseFloat(d.YLDperAnx.replace(/,/g, "")),
+                    YLDperDep: parseFloat(d.YLDperDep.replace(/,/g, "")),
+                    division: d.division
+                };
+            };
+            var W = 1000;
+            var H = 600;
+            var padding = 50;
+
+            var dataset = [];
+            var svg = d3.select("#mainsvg")
+                    .attr("width", W + 2 * padding)
+                    .attr("height", H + 2 * padding);
+
+            var chooseColor = function (s) {
+                switch (s) {
+                    case "africans":
+                        return "rgb(255,0,0)";
+                        break;
+                    case "americas":
+                        return "rgb(0,255,0)";
+                        break;
+                    case "Eastern Mediterranean":
+                        return "rgb(0,0,255)";
+                        break;
+                    case "European":
+                        return "rgb(255,192,0)";
+                        break;
+                    case "South East Asia":
+                        return "rgb(0,255,255)";
+                        break;
+                    case "Western Pacific":
+                        return "rgb(255,0,255)";
+                        break;
+                    default:
+                        return "rgb(255,255,255)";
+                }
+            };
+
+            function changeTitle() {
+                var xvari = document.getElementById("xvariable").value;
+                var yvari = document.getElementById("yvariable").value;
+                d3.select("#ypresent").text(choosey(yvari));
+                d3.select("#xpresent").text(choosex(xvari));
+                d3.select("#sizeexplan").text(function () {
+                    switch (yvari) {
+                        case "predep":
+                            return "Circle Size: Total Cases of Depressive Disorder";
+                            break;
+                        case "preanx":
+                            return "Circle Size: Total Cases of Anxiety Disorder";
+                            break;
+                        case "pretotal":
+                            return "Circle Size: Total Cases of Both Disorder";
+                            break;
+                        case "YLDdep":
+                            return "Circle Size: Total YLD of Depressive Disorder";
+                            break;
+                        case "YLDanx":
+                            return "Circle Size: Total YLD of Anxiety Disorder";
+                            break;
+                        case "YLDtotal":
+                            return "Circle Size: Total YLD of Both Disorder";
+                            break;
+                    }
+                });
+
+                var decidex = function (d, x) {
+                    switch (x) {
+                        case "gdpgrowth":
+                            return d.GDPgrowthrate;
+                            break;
+                        case "pergdp":
+                            return d.PercapitaGDP;
+                            break;
+                    }
+                };
+
+                var decidey = function (d, y) {
+                    switch (y) {
+                        case "predep":
+                            return d.DepPercent;
+                            break;
+                        case "preanx":
+                            return d.AnxPercent;
+                            break;
+                        case "pretotal":
+                            return (d.DepPercent + d.AnxPercent);
+                            break;
+                        case "YLDdep":
+                            return d.YLDperDep;
+                            break;
+                        case "YLDanx":
+                            return d.YLDperAnx;
+                            break;
+                        case "YLDtotal":
+                            return (d.YLDperDep + d.YLDperAnx);
+                            break;
+                    }
+                };
+
+                var decideSize = function (d, y) {
+                    switch (y) {
+                        case "predep":
+                            return d.PREofDepression;
+                            break;
+                        case "preanx":
+                            return d.PREofAnxiety;
+                            break;
+                        case "pretotal":
+                            return (d.PREofDepression + d.PREofAnxiety);
+                            break;
+                        case "YLDdep":
+                            return d.YLDofDep;
+                            break;
+                        case "YLDanx":
+                            return d.YLDofAnx;
+                            break;
+                        case "YLDtotal":
+                            return (d.YLDofDep + d.YLDofAnx);
+                            break;
+                    }
+                };
+                svg.selectAll("circle").remove();
+                svg.selectAll(".axis").remove();
+                svg.selectAll(".axisname").remove();
+                d3.csv("mental health world - Sheet1.csv", function (data) {
+                    for (var i = 0; i < data.length; i++) {
+                        dataset[i] = tyConvert(data[i]);
+                    }
+                    console.log(data[100]);
+                    console.log(dataset[100]);
+
+                    var xmax = d3.max(dataset, function (d) {
+                        return decidex(d, xvari);
+                    });
+                    var xmin = d3.min(dataset, function (d) {
+                        return decidex(d, xvari);
+                    });
+                    if (xvari === "gdpgrowth"){
+                        var xscale = d3.scaleLinear()
+                            .domain([xmin, xmax])
+                            .range([padding, W + padding]);
+                    }
+                    else{
+                        var xscale = d3.scaleLog()
+                                .domain([xmin, xmax])
+                            .range([padding, W + padding]);
+                    }
+
+                    var ymax = d3.max(dataset, function (d) {
+                        return decidey(d, yvari);
+                    });
+                    var ymin = d3.min(dataset, function (d) {
+                        return decidey(d, yvari);
+                    });
+                    var yscale = d3.scaleLinear()
+                            .domain([ymin, ymax])
+                            .range([H + padding, padding]);
+
+                    var rmax = d3.max(dataset, function (d) {
+                        return decideSize(d, yvari);
+                    });
+                    var rmin = d3.min(dataset, function (d) {
+                        return decideSize(d, yvari);
+                    });
+                    var rscale = d3.scaleLinear()
+                            .domain([rmin, rmax])
+                            .range([9, 400]);
+
+                    svg.selectAll("circle")
+                            .data(dataset)
+                            .enter()
+                            .append("circle")
+                            .attr("cx", function (d) {
+                                return xscale(decidex(d, xvari));
+                            })
+                            .attr("cy", function (d) {
+                                return yscale(decidey(d, yvari));
+                            })
+                            .attr("r", function (d) {
+                                return Math.sqrt(rscale(decideSize(d, yvari)));
+                            })
+                            .attr("fill", function (d) {
+                                return chooseColor(d.division);
+                            })
+                            .on("mouseover", function (d) {
+                                var xPosition = parseFloat(d3.select(this).attr("cx"));
+                                var yPosition = parseFloat(d3.select(this).attr("cy"));
+
+                                d3.select("#label_c")
+                                        .style("left", xPosition + "px")
+                                        .style("top", yPosition + 220 + "px")
+                                        .select("#country")
+                                        .text(d.country);
+                                var caseNum = decideSize(d,yvari);
+                                d3.select("#label_c")
+                                        .select("#value")
+                                        .text(function (d) {
+                                            switch (yvari) {
+                                                case "predep":
+                                                    return "Total Cases of Depressive Disorder:" + String(caseNum);
+                                                    break;
+                                                case "preanx":
+                                                    return "Total Cases of Anxiety Disorder:" + String(caseNum);
+                                                    break;
+                                                case "pretotal":
+                                                    return "Total Cases of Both Disorder:" + String(caseNum);
+                                                    break;
+                                                case "YLDdep":
+                                                    return "Total YLD of Depressive Disorder:" + String(caseNum);
+                                                    break;
+                                                case "YLDanx":
+                                                    return "Total YLD of Anxiety Disorder:" + String(caseNum);
+                                                    break;
+                                                case "YLDtotal":
+                                                    return "Total YLD of Both Disorder:" + String(caseNum);
+                                                    break;
+                                            }
+                                        });
+
+                                d3.select("#label_c").classed("hidden", false);
+
+                                d3.select("#xindicate")
+                                        .attr("x1", xPosition)
+                                        .attr("y1", yPosition)
+                                        .attr("x2", xPosition)
+                                        .attr("y2", yPosition)
+                                        .transition()
+                                        .attr("x2", xPosition)
+                                        .attr("y2", H + padding * 1.15)
+                                        .on("end", function (d) {
+                                            svg.append("text")
+                                                    .attr("x", xPosition)
+                                                    .attr("y", H + padding * 1.15)
+                                                    .attr("class", "xy")
+                                                    .attr("text-anchor", "middle")
+                                                    .attr("font-family", "sans-serif")
+                                                    .attr("font-size", "16px")
+                                                    .attr("fill", "grey")
+                                                    .text(xscale.invert(xPosition).toPrecision(4));
+                                        });
+
+                                d3.select("#yindicate")
+                                        .attr("x1", xPosition)
+                                        .attr("y1", yPosition)
+                                        .attr("x2", xPosition)
+                                        .attr("y2", yPosition)
+                                        .transition()
+                                        .attr("x2", padding * 0.9)
+                                        .attr("y2", yPosition)
+                                        .on("end", function (d) {
+                                            svg.append("text")
+                                                    .attr("x", padding * 0.9)
+                                                    .attr("y", yPosition)
+                                                    .attr("class", "xy")
+                                                    .attr("text-anchor", "middle")
+                                                    .attr("font-family", "sans-serif")
+                                                    .attr("font-size", "16px")
+                                                    .attr("fill", "grey")
+                                                    .text(yscale.invert(yPosition).toPrecision(4));
+                                        });
+
+                                d3.selectAll(".indicateline").classed("hidden", false);
+                            })
+                            .on("mouseout", function () {
+                                d3.select("#label_c").classed("hidden", true);
+                                d3.selectAll(".indicateline").classed("hidden", true);
+                                d3.selectAll(".xy").remove();
+                            });//append circle end
+
+                    var xaxis = d3.axisBottom()
+                            .scale(xscale);
+
+                    var yaxis = d3.axisLeft()
+                            .scale(yscale);
+                    //console.log(data[100]);
+                    svg.append("g")
+                            .attr("class", "axis")
+                            .attr("transform", "translate(0," + (H + padding * 1.15) + ")")
+                            .call(xaxis);
+                    svg.append("text")
+                            .attr("class", "axisname")
+                            .attr("x", W / 2)
+                            .attr("y", H + padding * 1.75)
+                            .attr("font-family", "sans-serif")
+                            .attr("font-size", "14px")
+                            .attr("font-weight", "bold")
+                            .attr("fill", "black")
+                            .text(choosex(xvari));
+
+                    svg.append("g")
+                            .attr("class", "axis")
+                            .attr("transform", "translate(" + (padding * 0.9) + ",0)")
+                            .call(yaxis);
+                    svg.append("text")
+                            .attr("class", "axisname")
+                            .attr("transform", "rotate(-90)")
+                            .attr("x", -H * 0.5)
+                            .attr("y", padding * 0.3)
+                            .attr("font-family", "sans-serif")
+                            .attr("text-anchor", "middle")
+                            .attr("font-size", "14px")
+                            .attr("font-weight", "bold")
+                            .attr("fill", "black")
+                            .text(choosey(yvari));
+                });//end of csv function
+            }
+            ;//end of changetitle function
+        </script>
+    </body>
+</html>
